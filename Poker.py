@@ -92,7 +92,7 @@ class Deck (object):
 
     ############################################################################
     # Methods
-    
+
     # shuffle the deck
     def shuffle (self):
         random.shuffle(self.deck)
@@ -109,11 +109,11 @@ class Deck (object):
 class Poker (object):
     ############################################################################
     # constructor
-    def __init__ (self, num_players = 2, num_cards = 5):
+    def __init__ (self, num_players = 2):
         self.deck = Deck()
         self.deck.shuffle()
         self.all_hands = []
-        self.numCards_in_Hand = num_cards
+        self.numCards_in_Hand = 5;
 
         # deal the cards to the players
         for i in range (num_players):
@@ -123,7 +123,7 @@ class Poker (object):
                 self.all_hands.append (hand);
 
     ############################################################################
-    # Play (and helper methods)
+    # Play
 
     # simulate the play of poker
     def play (self):
@@ -143,72 +143,90 @@ class Poker (object):
 
         # determine winner and print
 
+    ############################################################################
+    # Hand analysis methods.
+    # Each of these functions take one argument, a hand. This is a list of 5
+    # cards (the player). Each one returns a boolean (True or False).
+    # Note: All of these methods that hand is sorted.
 
     # determine if a hand is a royal flush
-    # takes as argument a list of 5 Card objects
-    # returnsa number (points) for that hand
-    def is_royal (self, hand):
-        same_suit = True;
+    def is_royal_flush(self, hand):
+        # First, check that the hand is both a flush and a straight.
+        if(self.is_straight_flush(hand) == False):
+            return False;
+
+        # If we've made it here, then we at least know that hand is a straight
+        # flush. For a straight flush to be a royal flush, the high card
+        # must be an Ace (rank 14)
+        if(hand[0].rank == 14):
+            return True;
+        else:
+            return False;
+
+    # determine if a hand is a straight flush
+    def is_straight_flush(self, hand):
+        # if hand is a straight flush, then it is both a straight and a flush.
+        # since we already have code to check both of these things, we can just
+        # call the appropiate methods rather than rewriting code.
+        return ((self.is_straight(hand)) and (self.is_flush(hand)));
+
+    # determine if a hand has four of the same kind.
+    def is_four_kind(self, hand):
+        pass;
+
+    # determine if a hand is a full house
+    def is_full_house(self, hand):
+        pass;
+
+    # determine if a hand is flush
+    def is_flush(self, hand):
+        # First, check that the hand is a flush. This happens when all 5 cards
+        # have the same suit. Or, equivalently, when each of the first 4 cards
+        # have the same suit as the next one.
         for i in range (len(hand) - 1):
-          same_suit = same_suit and (hand[i].suit == hand[i + 1].suit)
+            if(hand[i].suit != hand[i+1].suit):
+                return False;
 
-        if (not same_suit):
-          return 0, ''
+        # If we've made it here then the hand is a flush.
+        return True;
 
-        rank_order = True
-        for i in range (len(hand)):
-          rank_order = rank_order and (hand[i].rank == 14 - i)
+    # determine if a hand is a straight
+    def is_straight(self, hand):
+        # First, check if the hand is a flush. This happens when the 5 cards
+        # are in a row. Or, equivalently, when the rank of the ith card is
+        # one more than the rank of the i+1th card (for i = 0,1,2,3)
+        for i in range(len(hand)-1):
+            if((hand[i].rank - 1) != hand[i+1].rank):
+                return False;
 
-        if (not rank_order):
-          return 0, ''
+        # If we've made it to here then the hand is a straight.
+        return True;
 
-        points = 10 * 15 ** 5 + (hand[0].rank) * 15 ** 4 + (hand[1].rank) * 15 ** 3
-        points = points + (hand[2].rank) * 15 ** 2 + (hand[3].rank) * 15 ** 1
-        points = points + (hand[4].rank)
-
-        return points, 'Royal Flush'
-
-    def is_straight_flush (self, hand):
+    # determine if a hand has (at least) 3 of a kind
+    def is_three_kind(self, hand):
         pass;
 
-    def is_four_kind (self, hand):
+    # determine if a hand has 2 pair.
+    def is_two_pair(self, hand):
         pass;
 
-    def is_full_house (self, hand):
-        pass;
-
-    def is_flush (self, hand):
-        pass;
-
-    def is_straight (self, hand):
-        pass;
-
-    def is_three_kind (self, hand):
-        pass;
-
-    def is_two_pair (self, hand):
-        pass;
-
-    # determine if a hand is one pair
-    # takes as argument a list of 5 Card objects
-    # returns the number of points for that hand
-    def is_one_pair (self, hand):
+    # determine if a hand has (at least) one pair
+    def is_one_pair(self, hand):
         one_pair = False;
         for i in range (len(hand) - 1):
             if (hand[i].rank == hand[i + 1].rank):
                 one_pair = True;
                 break;
-        if (not one_pair):
-            return 0, '';
+        if (one_pair == False):
+            return False;
 
-        points = 2 * 15 ** 5 + (hand[0].rank) * 15 ** 4 + (hand[1].rank) * 15 ** 3;
-        points = points + (hand[2].rank) * 15 ** 2 + (hand[3].rank) * 15 ** 1;
-        points = points + (hand[4].rank);
+        # If we've made it here then the hand does have a pair.
+        return True;
 
-        return points, 'One Pair'
-
-    def is_high_card(self,hand):
-        pass;
+    ############################################################################
+    # Calculate points (using the formula provided by the professor)
+    def calculate_points(h, c1, c2, c3, c4, c5):
+        return h*(15**5) + c1*(15**4) + c2*(15**4) + c3*(15**2) + c4*(15) + c5;
 
 
 
