@@ -171,12 +171,42 @@ class Poker (object):
         return ((self.is_straight(hand)) and (self.is_flush(hand)));
 
     # determine if a hand has four of the same kind.
-    def is_four_kind(self, hand):
-        pass;
+    def is_four_of_a_kind(self, hand):
+        for i in range(len(hand)-3):
+            if(hand[i].rank == hand[i+1].rank) and (hand[i+1].rank == hand[i+2].rank) and (hand[i+2].rank == hand[i+3].rank):
+                return True;
+
+        # If we've made it here, then hand does not have 4 of a kind
+        return False;
 
     # determine if a hand is a full house
     def is_full_house(self, hand):
-        pass;
+        # if hand has a full house then it must have a pair and 3 of a kind.
+        # these two sets of cards must be disjoint, however.
+        i = 0;
+        three_of_a_kind = False;
+        pair = False;
+        while i < (len(hand) - 1):
+            # First, check for 3 of a kind.
+            if(i < (len(hand) - 2) and (hand[i].rank == hand[i+1].rank) and (hand[i+1].rank == hand[i+2].rank)):
+                three_of_a_kind = True;
+                # Now, skip ahead of the 3 of a kind.
+                i += 3;
+
+            # Now check for a pair.
+            elif(hand[i].rank == hand[i+1].rank):
+                pair = True;
+
+                # now, skip ahead of the pair.
+                i += 2;
+
+            else:
+                i +=1;
+
+        if(three_of_a_kind and pair):
+            return True;
+        else:
+            return False;
 
     # determine if a hand is flush
     def is_flush(self, hand):
@@ -203,25 +233,48 @@ class Poker (object):
         return True;
 
     # determine if a hand has (at least) 3 of a kind
-    def is_three_kind(self, hand):
-        pass;
+    def is_three_of_a_kind(self, hand):
+        # since the cards are sorted, 3 of a kind occurs if there are three
+        # adjacent cards with the same rank.
+        for i in range(len(hand) - 2):
+            if ((hand[i].rank == hand[i+1].rank) and (hand[i+1].rank == hand[i+2].rank)):
+                return True;
+
+        # If we've gotten to here then the hand does not have 3 of a kind
+        return False;
 
     # determine if a hand has 2 pair.
     def is_two_pair(self, hand):
-        pass;
+        # since the cards are sorted, two pairs occurs when there are two
+        # disjoint locations in the hand where adjacent cards have the same
+        # rank.
+        num_pairs = 0;
+        i = 0;
+        while i < (len(hand)-1):
+            if(hand[i].rank == hand[i+1].rank):
+                num_pairs += 1;
+
+                # since we know that the ith and i+1th cards are a pair, we need
+                # to skip forward two cards (to see if any other pairs exist)
+                i += 2;
+            else:
+                i +=1;
+
+        if(num_pairs == 2):
+            return True;
+        else:
+            return False;
 
     # determine if a hand has (at least) one pair
     def is_one_pair(self, hand):
-        one_pair = False;
+        # since the cards are sorted, a pair occurs when two adjacnet cards have
+        # the same rank
         for i in range (len(hand) - 1):
             if (hand[i].rank == hand[i + 1].rank):
-                one_pair = True;
-                break;
-        if (one_pair == False):
-            return False;
+                return True;
 
-        # If we've made it here then the hand does have a pair.
-        return True;
+        # If we've made it to here then there are no pairs in this hand.
+        return False;
 
     ############################################################################
     # Calculate points (using the formula provided by the professor)
