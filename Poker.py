@@ -90,6 +90,9 @@ class Deck (object):
                     card = Card(rank, suit);
                     self.deck.append(card);
 
+    ############################################################################
+    # Methods
+    
     # shuffle the deck
     def shuffle (self):
         random.shuffle(self.deck)
@@ -104,6 +107,7 @@ class Deck (object):
 
 
 class Poker (object):
+    ############################################################################
     # constructor
     def __init__ (self, num_players = 2, num_cards = 5):
         self.deck = Deck()
@@ -117,6 +121,9 @@ class Poker (object):
             for j in range (self.numCards_in_Hand):
                 hand.append (self.deck.deal());
                 self.all_hands.append (hand);
+
+    ############################################################################
+    # Play (and helper methods)
 
     # simulate the play of poker
     def play (self):
@@ -200,14 +207,28 @@ class Poker (object):
 
         return points, 'One Pair'
 
-    def is_high_card (self,hand):
+    def is_high_card(self,hand):
         pass;
+
+
+
+def get_num_players():
+    # This function gets the number of players from the user using an exception
+    # save setup. Invalid input is handled using exception
+    num_players = 0;
+    while((num_players < 2) or (num_players > 6)):
+        try:
+            num_players = int(input('Enter number of players: '));
+        except:
+            print("Invalid input. Number of players must be between 2 and 6 (inclusive). Try again.");
+
+    return num_players;
+
+
 
 def main():
     # prompt the user to enter the number of plaers
-    num_players = int (input ('Enter number of players: '));
-    while ((num_players < 2) or (num_players > 6)):
-        num_players = int (input ('Enter number of players: '));
+    num_players = get_num_players();
 
     # create the Poker object
     game = Poker (num_players);
@@ -215,4 +236,5 @@ def main():
     # play the game
     game.play();
 
-main();
+if(__name__ == "__main__"):
+    main();
