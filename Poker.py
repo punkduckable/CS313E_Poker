@@ -107,40 +107,68 @@ class Deck (object):
 
 
 class Poker (object):
+    # Class Variables (these just enumerate the different possible outcomes)
+    ROYAL_FLUSH = 10;
+    STRAIGHT_FLUSH = 9;
+    FOUR_OF_A_KIND = 8;
+    FULL_HOUSE = 7;
+    FLUSH = 6;
+    STRAIGHT = 5;
+    THREE_OF_A_KIND = 4;
+    TWO_PAIR = 3;
+    ONE_PAIR = 2;
+    HIGH_CARD = 1;
+
     ############################################################################
     # constructor
     def __init__ (self, num_players = 2):
-        self.deck = Deck()
-        self.deck.shuffle()
-        self.all_hands = []
-        self.numCards_in_Hand = 5;
+        self.deck = Deck();
+        self.deck.shuffle();
+        self.num_players = num_players;
+        self.num_cards_in_hand = 5;
 
-        # deal the cards to the players
-        for i in range (num_players):
-            hand = [];
-            for j in range (self.numCards_in_Hand):
-                hand.append (self.deck.deal());
-                self.all_hands.append (hand);
+        # deal the cards to the players (round robin)
+        hands = [ [] for i in range(num_players)];
+        for k in range(self.num_cards_in_hand):
+            for i in range(num_players):
+                hands[i].append(self.deck.deal());
+
+        self.all_hands = hands;
 
     ############################################################################
     # Play
 
     # simulate the play of poker
     def play (self):
-        # sort the hands of each player and print
+        # First, sort and print each player's hand.
         for i in range (len(self.all_hands)):
+            # Sort the hand
             sorted_hand = sorted (self.all_hands[i], reverse = True);
             self.all_hands[i] = sorted_hand;
+
+            # Now print it out.
             hand_str = '';
             for card in sorted_hand:
-                hand_str = hand_str + str (card) + ' ';
-                print ('Player ' + str(i + 1) + ' : ' + hand_str);
+                hand_str += str(card) + ' ';
+            print ('Player %d :' % (i+1), hand_str);
 
-        # determine the type of each hand and print
+        # determine the type and points of each hand. Print out the type
         hand_type = []; 	# create a list to store type of hand
         hand_points = [];	# create a list to store points for hand
 
+        for player in range(self.num_players):
+            hand = self.all_hands[player];
 
+            # identify the hand
+            type_ID, type_str = self._identify_hand(hand);
+            hand_type.append(type_ID);
+
+            # print out what they got
+            print("Player %d: %s" % (player+1, type_str));
+
+            # Now, determine the number of points.
+            points = self._calculate_hand_points(type_ID, hand)
+            hand_points.append(points);
         # determine winner and print
 
     ############################################################################
@@ -148,6 +176,32 @@ class Poker (object):
     # Each of these functions take one argument, a hand. This is a list of 5
     # cards (the player). Each one returns a boolean (True or False).
     # Note: All of these methods that hand is sorted.
+
+    # determine what hand player i has.
+    # accepts in a hand, returns an ID and a string. ID is the ID for the hand
+    # type (For example, straights have an ID of 5, see class varaiables above)
+    # the string is for printing purposes. It holds the name of the hand type.
+    def _identify_hand(self, hand):
+        if(self.is_royal_flush(hand)):
+            return Poker.ROYAL_FLUSH, "Royal Flush";
+        elif(self.is_straight_flush(hand)):
+            return Poker.STRAIGHT_FLUSH, "Straight Flush";
+        elif(self.is_four_of_a_kind(hand)):
+            return Poker.FOUR_OF_A_KIND, "Four of a Kind";
+        elif(self.is_full_house(hand)):
+            return Poker.FULL_HOUSE, "Full House";
+        elif(self.is_flush(hand)):
+            return Poker.FLUSH, "Flush";
+        elif(self.is_straight(hand)):
+            return Poker.STRAIGHT, "Straight";
+        elif(self.is_three_of_a_kind(hand)):
+            return Poker.THREE_OF_A_KIND, "Three of a Kind";
+        elif(self.is_two_pair(hand)):
+            return Poker.TWO_PAIR, "Two Pair";
+        elif(self.is_one_pair(hand)):
+            return Poker.ONE_PAIR, "One Pair";
+        else:
+            return Poker.HIGH_CARD, "High Card";
 
     # determine if a hand is a royal flush
     def is_royal_flush(self, hand):
@@ -258,7 +312,7 @@ class Poker (object):
                 # to skip forward two cards (to see if any other pairs exist)
                 i += 2;
             else:
-                i +=1;
+                i += 1;
 
         if(num_pairs == 2):
             return True;
@@ -277,10 +331,141 @@ class Poker (object):
         return False;
 
     ############################################################################
-    # Calculate points (using the formula provided by the professor)
-    def calculate_points(h, c1, c2, c3, c4, c5):
-        return h*(15**5) + c1*(15**4) + c2*(15**4) + c3*(15**2) + c4*(15) + c5;
+    # Calculate points
 
+    """This method finds the points of a given hand using the formula provided in
+    the problem statement.
+    Note: This method assumes that each hand has exactly 5 cards and is sorted.
+
+    The first argument, type_ID, is the hand type ID
+        The Type ID's are enumerated as class variables for the Poker class.
+        These can be found at the top of the Poker class. For example, if the
+        hand is a straight flush then type_ID = 9)
+    Note: the user must have identified the hand type before calling this method
+
+    The second argument, hand, is simply the hand that we're finding the points
+    of."""
+    def _calculate_hand_points(self, type_ID, hand):
+        # First, check if the hand type requires special modification to the
+        # points formula.
+        if(type_ID == Poker.FOUR_OF_A_KIND):
+            return self._four_of_a_kind_points(hand);
+        elif(type_ID == Poker.FULL_HOUSE):
+            return self._full_house_points(hand);
+        elif(type_ID == Poker.THREE_OF_A_KIND):
+            return self._three_of_a_kind_points(hand);
+        elif(type_ID == Poker.TWO_PAIR):
+            return self._two_pair_points(hand);
+        elif(type_ID == Poker.ONE_PAIR):
+            return self._one_pair_points(hand);
+        else:
+            return self._calculate_points(type_ID, hand[0].rank, hand[1].rank, hand[2].rank, hand[3].rank, hand[4].rank);
+
+    # modified points formula for if hand has 4 of a kind
+    def _four_of_a_kind_points(self, hand):
+        # First, we need to figure out the rank that we have four of as well
+        # as the rank of the side card. Importantly, since each hand only
+        # has 5 cards, the middle card must be one of the 4 and the side
+        # card must be either the first or last.
+        rank_four = hand[2].rank;
+        rank_spare = 0;
+        if(hand[0].rank != rank_four):
+            rank_spare = hand[0].rank;
+        else:
+            rank_spare = hand[4].rank;
+
+        # Now we can assign the c's and calculate the points
+        c1 = c2 = c3 = c4 = rank_four;
+        c5 = rank_spare;
+        return self._calculate_points(Poker.FOUR_OF_A_KIND, c1, c2, c3, c4, c5);
+
+    # modified points formula for if hand is a full house
+    def _full_house_points(self, hand):
+        # First, we need to determine the rank that we have 3 of and the
+        # rank that we have two of. Since the hand is sorted and since
+        # each hand only has 5 cards, the middle card must be one of the
+        # 3. The first or last card must be one of the two.
+        rank_three = hand[2].rank;
+        rank_two = 0;
+
+        if(hand[0].rank != rank_three):
+            rank_two = hand[0].rank;
+        else:
+            rank_two = hand[4].rank;
+
+        # Now we can assign the c's and find the points
+        c1 = c2 = c3 = rank_three;
+        c4 = c5 = rank_two;
+        return self._calculate_points(Poker.FULL_HOUSE, c1, c2, c3, c4, c5);
+
+    # modified points formula for if hand has three of a kind
+    def _three_of_a_kind_points(self, hand):
+        # First, we need to determine the rank that we have 3 of. Since the
+        # hand is sorted and since each card only has 5 cards, the middle
+        # card must be one of the 3.
+        rank_three = hand[2].rank;
+
+        # Now, determine the other two ranks
+        spare_card_ranks = [c.rank for c in hand if (c.rank != rank_three)];
+        c4 = spare_card_ranks[0];
+        c5 = spare_card_ranks[1];
+
+        # Finally, we can assign the other c's and then find the points.
+        c1 = c2 = c3 = rank_three;
+        return self._calculate_points(Poker.THREE_OF_A_KIND, c1, c2, c3, c4, c5);
+
+    # modified points formula for if hand has two pair
+    def _two_pair_points(self, hand):
+        # First, we need to determine the rank of the two pairs and the spare
+        # card.
+        rank_high_pair = 0;
+        rank_low_pair = 0;
+        rank_spare = 0;
+        i = 0;
+        while i < (len(hand)-1):
+            if(hand[i].rank == hand[i+1].rank):
+                if(rank_high_pair == 0):
+                    rank_high_pair = hand[i].rank;
+                else:
+                    rank_low_pair = hand[i].rank;
+
+                # since we know that the ith and i+1th cards are a pair, we need
+                # to skip forward two cards (to see if any other pairs exist)
+                i += 2;
+            else:
+                rank_spare = hand[i].rank;
+                i += 1;
+
+        # now we can assign the c's and calculate the points.
+        c1 = c2 = rank_high_pair
+        c3 = c4 = rank_low_pair
+        c5 = rank_spare;
+        return self._calculate_points(Poker.TWO_PAIR, c1, c2, c3, c4, c5);
+
+    # modified points formula for if hand has one pair
+    def _one_pair_points(self, hand):
+        # First, we need to determine the rank of the pairs.
+        spare_card_ranks = [c.rank for c in hand];
+        rank_pair = 0;
+        for i in range(len(hand)-1):
+            if(hand[i].rank == hand[i+1].rank):
+                rank_pair = hand[i].rank;
+
+                # remove both instances of the pair rank.
+                spare_card_ranks.remove(rank_pair);
+                spare_card_ranks.remove(rank_pair);
+                break;
+
+        # Now we can assign the remaining c's and calculate the points.
+        c1 = c2 = rank_pair;
+        c3 = spare_card_ranks[0];
+        c4 = spare_card_ranks[1];
+        c5 = spare_card_ranks[2];
+        return self._calculate_points(Poker.ONE_PAIR, c1, c2, c3, c4, c5);
+
+    # Calculate points using the formula provided in the problem statement.
+    def _calculate_points(self, h, c1, c2, c3, c4, c5):
+        return h*(15**5) + c1*(15**4) + c2*(15**3) + c3*(15**2) + c4*(15) + c5;
 
 
 def get_num_players():
