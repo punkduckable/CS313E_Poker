@@ -140,6 +140,7 @@ class Poker (object):
 
     # simulate the play of poker
     def play (self):
+        ########################################################################
         # First, sort and print each player's hand.
         for i in range (len(self.all_hands)):
             # Sort the hand
@@ -151,25 +152,51 @@ class Poker (object):
             for card in sorted_hand:
                 hand_str += str(card) + ' ';
             print ('Player %d :' % (i+1), hand_str);
+        print();
 
+        ########################################################################
         # determine the type and points of each hand. Print out the type
-        hand_type = []; 	# create a list to store type of hand
-        hand_points = [];	# create a list to store points for hand
 
-        for player in range(self.num_players):
-            hand = self.all_hands[player];
+        # Each element of player data is a 3-component tuple. The first component
+        # is the player number, the second is that player's hand ID (type of hand)
+        # the third is the number of points that player earned.
+        player_data = [];
+
+        for i in range(self.num_players):
+            hand = self.all_hands[i];
 
             # identify the hand
             type_ID, type_str = self._identify_hand(hand);
-            hand_type.append(type_ID);
 
             # print out what they got
-            print("Player %d: %s" % (player+1, type_str));
+            print("Player %d: %s" % (i+1, type_str));
 
             # Now, determine the number of points.
             points = self._calculate_hand_points(type_ID, hand)
-            hand_points.append(points);
-        # determine winner and print
+
+            # append these results to player_data
+            player_data.append((i, type_ID, points));
+        print();
+
+        ########################################################################
+        # Figure out who won.
+
+        # First, sort the player data by points.
+        sorted_player_data = sorted(player_data, key = lambda x: x[2], reverse = True);
+
+        # now, determine the best hand type (the hand type of the top ranked
+        # player). Find all players who go this hand type.
+        winning_hand_type = sorted_player_data[0][1];
+        winning_players = [data for data in sorted_player_data if (data[1] == winning_hand_type)];
+
+        # Finally, print out the results.
+        if (len(winning_players) == 1):
+            print("Player %d wins." % (winning_players[0][0]+1));
+        else:
+            # players should be sorted by points already.
+            for player in winning_players:
+                print("Player %d ties" % (player[0]+1));
+
 
     ############################################################################
     # Hand analysis methods.
